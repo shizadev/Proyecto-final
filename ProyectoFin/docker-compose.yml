@@ -1,0 +1,38 @@
+#Listo... creo
+
+version: '3.8'
+
+services:
+  app_web:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - base_de_datos
+    volumes:
+      - ./:/var/www/html/
+      
+  base_de_datos:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: password_seguro_123
+      MYSQL_DATABASE: ProyectoFin
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: password_seguro_123
+      volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql
+      ports:
+      - "3306:3306"
+      
+  python_reporter:
+    build:
+      context: ./Python
+    volumes:
+      - shared_data:/shared
+    depends_on:
+      - base_de_datos
+
+volumes:
+  db_data:
+  shared_data:
