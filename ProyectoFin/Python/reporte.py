@@ -1,5 +1,4 @@
-#De momento esto es para crear reportes nada mas
-#Si se te ocurre algo mas que podamos agregarle me avisas
+#Listo
 
 import mysql.connector
 
