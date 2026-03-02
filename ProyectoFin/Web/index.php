@@ -67,14 +67,10 @@ $tickets = $stmt->fetchAll();
 <head>
     <title>Sistema de Tickets</title>
     <style>
-        body { font-family: Arial; margin: 40px; }
-        table { border-collapse: collapse; width: 100%; }
-        table, th, td { border: 1px solid black; padding: 8px; }
-        th { background: #eee; }
-        .solucionado { color: green; font-weight: bold; }
-        .pendiente { color: red; font-weight: bold; }
-        .error {color:red;}
-        .exito {color: green;}
+        <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
     </style>
 </head>
 <body>
