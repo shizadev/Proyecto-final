@@ -1,10 +1,10 @@
 -- # Listo
 
-CREATE DATABASE ProyectoFin
+CREATE DATABASE IF NOT EXISTS ProyectoFin;
 
-USE ProyectoFin
+USE ProyectoFin;
 
-CREATE TABLE tickets (
+CREATE TABLE IF NOT EXISTS tickets (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario TEXT NOT NULL,
     falla TEXT NOT NULL,

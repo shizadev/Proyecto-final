@@ -2,6 +2,7 @@
 require_once 'db.php';
 
 $error = "";
+$succes = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -15,8 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'usuario' => $usuario,
                 'falla' => $falla
             ]);
-            header("Location: index.php");
-            exit();
+            $succes = "Ticket creado";
         } else {
             $error = "Complete todos los campos";
         }
@@ -36,9 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'estado' => $nuevo_estado,
             'id' => $id
         ]);
-
-        header("Location: index.php");
-        exit();
+        $succes = "Estado actualizado";
     }
 
     if (isset($_POST['editar_ticket'])) {
@@ -53,8 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'falla' => $falla,
                 'id' => $id
             ]);
-            header("Location: index.php");
-            exit();
+            $succes ="Ticket editado";
         } else {
             $error = "Complete todos los campos";
         }
@@ -76,6 +73,8 @@ $tickets = $stmt->fetchAll();
         th { background: #eee; }
         .solucionado { color: green; font-weight: bold; }
         .pendiente { color: red; font-weight: bold; }
+        .error {color:red;}
+        .exito {color: green;}
     </style>
 </head>
 <body>
@@ -83,7 +82,12 @@ $tickets = $stmt->fetchAll();
 <h1>Sistema de Tickets</h1>
 
 <?php if ($error): ?>
-    <p style="color:red;"><?php echo $error; ?></p>
+    <p class="error"><?= htmlspecialchars($error) ?>
+    style="color:red;"><?php echo $error; ?></p>
+<?php endif; ?>
+
+<?php if ($succes): ?>
+    <p class="exito"><?= htmlspecialchars($succes) ?>
 <?php endif; ?>
 
 <h2>Crear Ticket</h2>
@@ -125,10 +129,58 @@ $tickets = $stmt->fetchAll();
                         Cambiar Estado
                     </button>
                 </form>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="id" value=" <?=  $ticket['id'] ?>">
+                    <input type="hidden" name="usuario" value=" <?=  htmlspecialchars($ticket['usuario'], ENT_QUOTES) ?>">
+                    <input type="hidden" name="falla" value=" <?=  htmlspecialchars($ticket['falla'], ENT_QUOTES) ?>">
+                    <button type="button" onclick="editarTicket(<?=  $ticket['id'] ?>, '<?=  addslashes(htmlspecialchars($ticket['usuario'])) ?>', '<?= addslashes(htmlspecialchars($ticket['falla'])) ?>')">Editar</button>
+                </form>
+
+                <form method="POST" style="display:inline;" onsubmit="return confirm('¿Quieres eliminar este ticket?');">
+                    <input type="hidden" name="id" value=" <?=  $ticket['id'] ?>">
+                    <button type="submit" name="eliminar_ticket">Eliminar</button>
+                </form>
             </td>
         </tr>
     <?php endforeach; ?>
 </table>
+
+<div>
+    <h2>Editar Ticket</h2>
+    <form method="POST" onsubmit="return validarEditar();">
+        <input type="hidden" name="id" id="editar_id">
+        <label>Usuario:</label><br>
+        <input type="text" name="usuario" id="editar_usuario" required><br>
+        <label>Descripcion de la falla:</label><br>
+        <input type="text" name="falla" id="editar_falla" required><br>
+        <button type="submit" name="editar_ticket">Guardar</button>
+        <button type="button" onclick="cancelarEdicion()">Cancelar</button>
+    </form>
+</div>
+                
+<script>
+function editarTicket(id,usuario,falla){
+    document.getElementById('formEditar').style.display = 'block';
+    document.getElementById('editar_id').value = id;
+    document.getElementById('editar_usuario').value = usuario;
+    document.getElementById('editar_falla').value = falla;
+    window.scrollTo(0,document.body.scrollHeight);
+    }
+
+function cancelarEdicion(){
+    document.getElementById('formEditar').style.display = 'none';
+    }
+
+function validarEditar(){
+    const usuario = document.getElementById('ediar_usuario').value.trim();
+    const descripcion = document.getElementById('editar_falla').value.trim();
+    if (!usuario || !descripcion){
+        alert('Complete todos los campos');
+        return false;
+    } return true;
+}
+
+</script>
 
 </body>
 </html>
