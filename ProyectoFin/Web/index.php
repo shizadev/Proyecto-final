@@ -12,10 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($usuario !== "" && $falla !== "") {
             $stmt = $pdo->prepare("INSERT INTO tickets (usuario, falla) VALUES (:usuario, :falla)");
-            $stmt->execute([
-                'usuario' => $usuario,
-                'falla' => $falla
-            ]);
+            $stmt->execute(['usuario' => $usuario, 'falla' => $falla]);
             $succes = "Ticket creado";
         } else {
             $error = "Complete todos los campos";
@@ -24,37 +21,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['toggle_status'])) {
         $id = (int) $_POST['id'];
-
         $stmt = $pdo->prepare("SELECT solucionado FROM tickets WHERE id = :id");
         $stmt->execute(['id' => $id]);
         $estado_actual = $stmt->fetchColumn();
 
         $nuevo_estado = $estado_actual ? 0 : 1;
-
         $stmt = $pdo->prepare("UPDATE tickets SET solucionado = :estado WHERE id = :id");
-        $stmt->execute([
-            'estado' => $nuevo_estado,
-            'id' => $id
-        ]);
+        $stmt->execute([':estado' => $nuevo_estado, ':id' => $id]);
         $succes = "Estado actualizado";
     }
 
-    if (isset($_POST['editar_ticket'])) {
+    if (isset($_POST['editar_ticket'])) { 
         $id = (int) $_POST['id'];
         $usuario = trim($_POST['usuario']);
         $falla = trim($_POST['falla']);
 
         if ($usuario !== "" && $falla !== "") {
             $stmt = $pdo->prepare("UPDATE tickets SET usuario = :usuario, falla = :falla WHERE id = :id");
-            $stmt->execute([
-                'usuario' => $usuario,
-                'falla' => $falla,
-                'id' => $id
-            ]);
-            $succes ="Ticket editado";
+            $stmt->execute([':usuario' => $usuario, ':falla' => $falla, ':id' => $id]);
+            $succes = "Ticket editado";
         } else {
-            $error = "Complete todos los campos";
+            $error = "Complete todos los campos al editar";
         }
+    }
+
+
+    if (isset($_POST['eliminar_ticket'])) {
+        $id = (int) $_POST['id'];
+        $stmt = $pdo->prepare("DELETE FROM tickets WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $succes = "Ticket eliminado";
     }
 }
 
@@ -63,119 +59,119 @@ $tickets = $stmt->fetchAll();
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
     <title>Sistema de Tickets</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <style>
-        <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-    />
+        .exito { color: #2ecc71; background: #e8f8f0; padding: 10px; border-radius: 5px; }
+        .error { color: #e74c3c; background: #fdeaea; padding: 10px; border-radius: 5px; }
+        .solucionado { color: green; font-weight: bold; }
+        .pendiente { color: orange; font-weight: bold; }
     </style>
 </head>
-<body>
+<body class="container">
 
-<h1>Sistema de Tickets</h1>
+<h1>Gestión de Tickets</h1>
 
-<?php if ($error): ?>
-    <p class="error"><?= htmlspecialchars($error) ?>
-    style="color:red;"><?php echo $error; ?></p>
-<?php endif; ?>
+<?php if ($error): ?> <p class="error"><?= htmlspecialchars($error) ?></p> <?php endif; ?>
+<?php if ($succes): ?> <p class="exito"><?= htmlspecialchars($succes) ?></p> <?php endif; ?>
 
-<?php if ($succes): ?>
-    <p class="exito"><?= htmlspecialchars($succes) ?>
-<?php endif; ?>
-
-<h2>Crear Ticket</h2>
-<form method="POST">
-    <input type="text" name="usuario" placeholder="Usuario" required>
-    <input type="text" name="falla" placeholder="Descripción de la falla" required>
-    <button type="submit" name="crear_ticket">Crear</button>
-</form>
-
-<h2>Lista de Tickets</h2>
-
-<table>
-    <tr>
-        <th>ID</th>
-        <th>Usuario</th>
-        <th>Falla</th>
-        <th>Fecha</th>
-        <th>Estado</th>
-        <th>Acciones</th>
-    </tr>
-
-    <?php foreach ($tickets as $ticket): ?>
-        <tr>
-            <td><?= $ticket['id'] ?></td>
-            <td><?= htmlspecialchars($ticket['usuario']) ?></td>
-            <td><?= htmlspecialchars($ticket['falla']) ?></td>
-            <td><?= $ticket['fecha'] ?></td>
-            <td>
-                <?php if ($ticket['solucionado']): ?>
-                    <span class="solucionado">Solucionado</span>
-                <?php else: ?>
-                    <span class="pendiente">Pendiente</span>
-                <?php endif; ?>
-            </td>
-            <td>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="id" value="<?= $ticket['id'] ?>">
-                    <button type="submit" name="toggle_status">
-                        Cambiar Estado
-                    </button>
-                </form>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="id" value=" <?=  $ticket['id'] ?>">
-                    <input type="hidden" name="usuario" value=" <?=  htmlspecialchars($ticket['usuario'], ENT_QUOTES) ?>">
-                    <input type="hidden" name="falla" value=" <?=  htmlspecialchars($ticket['falla'], ENT_QUOTES) ?>">
-                    <button type="button" onclick="editarTicket(<?=  $ticket['id'] ?>, '<?=  addslashes(htmlspecialchars($ticket['usuario'])) ?>', '<?= addslashes(htmlspecialchars($ticket['falla'])) ?>')">Editar</button>
-                </form>
-
-                <form method="POST" style="display:inline;" onsubmit="return confirm('¿Quieres eliminar este ticket?');">
-                    <input type="hidden" name="id" value=" <?=  $ticket['id'] ?>">
-                    <button type="submit" name="eliminar_ticket">Eliminar</button>
-                </form>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-</table>
-
-<div>
-    <h2>Editar Ticket</h2>
-    <form method="POST" onsubmit="return validarEditar();">
-        <input type="hidden" name="id" id="editar_id">
-        <label>Usuario:</label><br>
-        <input type="text" name="usuario" id="editar_usuario" required><br>
-        <label>Descripcion de la falla:</label><br>
-        <input type="text" name="falla" id="editar_falla" required><br>
-        <button type="submit" name="editar_ticket">Guardar</button>
-        <button type="button" onclick="cancelarEdicion()">Cancelar</button>
+<section>
+    <h2>Crear Nuevo Ticket</h2>
+    <form method="POST">
+        <div class="grid">
+            <input type="text" name="usuario" placeholder="Nombre de usuario" required>
+            <input type="text" name="falla" placeholder="Descripción del problema" required>
+        </div>
+        <button type="submit" name="crear_ticket">Crear Ticket</button>
     </form>
-</div>
-                
+</section>
+
+<hr>
+
+<section>
+    <h2>Lista de Tickets</h2>
+    <table class="striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Usuario</th>
+                <th>Falla</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($tickets as $ticket): ?>
+            <tr>
+                <td><?= $ticket['id'] ?></td>
+                <td><?= htmlspecialchars($ticket['usuario']) ?></td>
+                <td><?= htmlspecialchars($ticket['falla']) ?></td>
+                <td>
+                    <?= $ticket['solucionado'] ? 'Solucionado' : 'Pendiente' ?>
+                </td>
+                <td>
+                    <div role="group">
+                        <form method="POST" style="margin:0;">
+                            <input type="hidden" name="id" value="<?= $ticket['id'] ?>">
+                            <button type="submit" name="toggle_status" class="outline">Estado</button>
+                        </form>
+                        
+                        <button class="contrast" onclick="abrirEditor(<?= $ticket['id'] ?>, '<?= addslashes($ticket['usuario']) ?>', '<?= addslashes($ticket['falla']) ?>')">
+                            Editar
+                        </button>
+
+                        <form method="POST" style="margin:0;" onsubmit="return confirm('¿Eliminar ticket?');">
+                            <input type="hidden" name="id" value="<?= $ticket['id'] ?>">
+                            <button type="submit" name="eliminar_ticket" class="secondary">Eliminar</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</section>
+
+<dialog id="modalEditar">
+  <article>
+    <header>
+      <button aria-label="Close" rel="prev" onclick="cerrarEditor()"></button>
+      <h3>Modificar Ticket</h3>
+    </header>
+    <form method="POST">
+        <input type="hidden" name="id" id="edit_id">
+        <label for="edit_usuario">Usuario</label>
+        <input type="text" name="usuario" id="edit_usuario" required>
+        <label for="edit_falla">Falla</label>
+        <input type="text" name="falla" id="edit_falla" required>
+        <footer>
+          <button type="button" class="secondary" onclick="cerrarEditor()">Cancelar</button>
+          <button type="submit" name="editar_ticket">Guardar Cambios</button>
+        </footer>
+    </form>
+  </article>
+</dialog>
+
 <script>
-function editarTicket(id,usuario,falla){
-    document.getElementById('formEditar').style.display = 'block';
-    document.getElementById('editar_id').value = id;
-    document.getElementById('editar_usuario').value = usuario;
-    document.getElementById('editar_falla').value = falla;
-    window.scrollTo(0,document.body.scrollHeight);
-    }
+const modal = document.getElementById('modalEditar');
 
-function cancelarEdicion(){
-    document.getElementById('formEditar').style.display = 'none';
-    }
-
-function validarEditar(){
-    const usuario = document.getElementById('ediar_usuario').value.trim();
-    const descripcion = document.getElementById('editar_falla').value.trim();
-    if (!usuario || !descripcion){
-        alert('Complete todos los campos');
-        return false;
-    } return true;
+function abrirEditor(id, usuario, falla) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_usuario').value = usuario;
+    document.getElementById('edit_falla').value = falla;
+    modal.setAttribute('open', true);
 }
 
+function cerrarEditor() {
+    modal.removeAttribute('open');
+}
+
+window.onclick = function(event) {
+    if (event.target == modal) cerrarEditor();
+}
 </script>
 
 </body>
